@@ -78,12 +78,18 @@ class PackageSpec(object):
                             self._deps)
 
 
-def parse_deps(env_name):
+def parse_deps(env):
     all_deps = {}
-    out_fd = subprocess.Popen(['conda', 'env', 'export', '-n', env_name],
-                              universal_newlines=True,
-                              stdout=subprocess.PIPE)
-    pkgs = yaml.safe_load(out_fd.stdout)
+    if os.path.isfile(env):
+        with open(env, 'r') as fp:
+            pkgs = yaml.safe_load(fp)
+        env_name = pkgs['name']
+    else:
+        env_name = env
+        out_fd = subprocess.Popen(['conda', 'env', 'export', '-n', env_name],
+                                  universal_newlines=True,
+                                  stdout=subprocess.PIPE)
+        pkgs = yaml.safe_load(out_fd.stdout)
     deps = pkgs['dependencies']
     channels = pkgs['channels']
     conda_meta_dpath = os.path.join(pkgs['prefix'], 'conda-meta')
@@ -91,12 +97,20 @@ def parse_deps(env_name):
     if isinstance(deps[-1], dict) and 'pip' in deps[-1]:
         pip_deps = deps.pop()['pip']
     for dep in deps:
-        name, ver = dep.split('=', 1)
+        if '=' in dep:
+            name, ver = dep.split('=', 1)
+        else:
+            name = dep
+            ver = ''
         all_deps[name] = PackageSpec(name, ver)
     for dep in pip_deps:
-        name, ver = dep.split('=', 1)
+        if '=' in dep:
+            name, ver = dep.split('=', 1)
+        else:
+            name = dep
+            ver = ''
         all_deps[name] = PackageSpec(name, ver, from_pip=True)
-    return all_deps, conda_meta_dpath, channels
+    return all_deps, conda_meta_dpath, channels, env_name
 
 
 def update_deps_with_conda_meta(env_name, conda_meta_dpath, all_deps):
@@ -132,12 +146,13 @@ def render_deps_graph(all_deps, out_fname, ext):
 
 def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('env_name', help='environment name')
+    parser.add_argument('env', help='environment name, or environment.yml file')
     args = parser.parse_args(argv[1:])
 
-    print('Loading dependencies from env "{}"...'.format(args.env_name),
+    print('Loading dependencies from env "{}"...'.format(args.env),
           file=sys.stderr)
-    all_deps, conda_meta_dpath, channels = parse_deps(args.env_name)
+    all_deps, conda_meta_dpath, channels, env_name = parse_deps(args.env)
+    args.env_name = env_name
 
     print('Parsing conda metadata...', file=sys.stderr)
     update_deps_with_conda_meta(args.env_name, conda_meta_dpath, all_deps)
@@ -160,7 +175,10 @@ def main(argv):
             if pkgspec.from_pip:
                 pip_deps.append(dep_name)
             else:
-                print('  - {}={}'.format(dep_name, pkgspec.version))
+                if pkgspec.version:
+                    print('  - {}={}'.format(dep_name, pkgspec.version))
+                else:
+                    print('  - {}'.format(dep_name))
     print('  - pip:')
     for dep_name in pip_deps:
         print('    - {}'.format(dep_name))
