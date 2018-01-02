@@ -18,8 +18,8 @@ import subprocess
 
 @numba.njit()
 def primes(n):
-    """Return an array of prime numbers that are less than n. Uses the "Euler's
-    Sieve" variant of the "Sieve of Eratosthenes" algorithm.
+    """Return an array of prime numbers that are less than n. Uses the "Sieve of
+    Eratosthenes" algorithm.
     """
     s = np.arange(3, n, 2)
     for m in range(3, int(n ** 0.5)+1, 2): 
