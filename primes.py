@@ -16,17 +16,17 @@ import subprocess
 
 
 
-@numba.njit()
+@numba.njit
 def primes(n):
     """Return an array of prime numbers that are less than n. Uses the "Sieve of
     Eratosthenes" algorithm.
     """
     s = np.arange(3, n, 2)
-    for m in range(3, int(n ** 0.5)+1, 2): 
-        if s[(m-3)//2]:
-            s[(m*m-3)//2::m] = 0
-    res = s[s>0]
-    res_cpy = np.empty(res.shape[0]+1, s.dtype)
+    for m in range(3, int(n ** 0.5) + 1, 2):
+        if s[(m - 3) // 2]:
+            s[((m * m) - 3) // 2::m] = 0
+    res = s[s > 0]
+    res_cpy = np.empty(res.shape[0] + 1, s.dtype)
     res_cpy[0] = 2
     res_cpy[1:] = res
     return res_cpy
