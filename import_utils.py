@@ -18,26 +18,27 @@ import sys
 
 class ImportLister(ast.NodeVisitor):
     def __init__(self):
-        self._imports = []
+        self._imports = set()
 
     @property
     def imports(self):
         return copy.copy(self._imports)
 
-    def _inspect_module_import(self, node):
+    def visit_Import(self, node):
         for name in node.names:
             if '.' in name.name:
                 # Only keep the module name before the first period
-                self._imports.append(name.name.split('.', 1)[0])
+                self._imports.add(name.name.split('.', 1)[0])
             else:
-                self._imports.append(name.name)
-
-    def visit_Import(self, node):
-        self._inspect_module_import(node)
+                self._imports.add(name.name)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
-        self._inspect_module_import(node)
+        if '.' in node.module:
+            # Only keep the module name before the first period
+            self._imports.add(node.module.split('.', 1)[0])
+        else:
+            self._imports.add(node.module)
         self.generic_visit(node)
 
 
@@ -55,7 +56,8 @@ def get_filepaths(files_or_directories):
         else:
             for root, _, filenames in os.walk(thing):
                 for filename in filenames:
-                    filepaths.append(os.path.join(root, filename))
+                    if filename.lower().endswith('.py'):
+                        filepaths.append(os.path.join(root, filename))
 
     return filepaths
 
