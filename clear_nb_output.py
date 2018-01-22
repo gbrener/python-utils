@@ -23,7 +23,7 @@ def main(argv):
     parser.add_argument('-o', '--output', help='Output file to write resulting notebook. If not provided, output will be writen to STDOUT.')
     args = parser.parse_args()
 
-    with open(args.src_fpath, 'r') as src_fp:
+    with open(args.src_fpath, 'rb') as src_fp:
         src_json = json.load(src_fp)
     dest_json = copy.deepcopy(src_json)
 
