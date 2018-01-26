@@ -2,8 +2,6 @@
 
 """
 Utilities related to module imports and import statements.
-
-Should work in both Python 2 and 3.
 """
 
 import argparse
