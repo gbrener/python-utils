@@ -124,14 +124,17 @@ def main(argv):
     import_lister = ImportLister()
     for filepath in filepaths:
         import_lister.filepath = filepath
-        with open(filepath, 'rU') as fp:
+        if not os.path.isfile(filepath):
+            continue
+        with open(filepath, 'rU', encoding='utf-8') as fp:
             logging.debug('Parsing %s', filepath)
             contents = ''
             if filepath.lower().endswith('.ipynb'):
                 nb_json = json.load(fp)
                 for cell in nb_json['cells']:
                     if cell['cell_type'] == 'code':
-                        cell_src = ''.join(cell['source'])
+                        cell_src = ''.join([s for s in cell['source']
+                                            if s[0] not in ('!', '%', '?')])
                         if not cell_src.startswith('%%'):
                             contents += cell_src + '\n'
             else:
@@ -141,7 +144,10 @@ def main(argv):
                 contents = re.sub(r'\n\s*%[a-zA-Z][^\n]*', '', contents)
             if re.search(r'\n\s*!', contents):
                 contents = re.sub(r'\n\s*![^\n]*', '', contents)
-            tree = ast.parse(contents)
+            try:
+                tree = ast.parse(contents)
+            except SyntaxError as err:
+                logging.debug('%s: %s', err.__class__.__name__, err.msg)
             import_lister.visit(tree)
 
     imports = import_lister.imports
