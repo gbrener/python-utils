@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 
-"""
-Utilities related to module imports and import statements.
+"""Utilities related to module imports and import statements.
+
+Currently, this script does one thing:
+  - Prints a list of module names that are ``imported`` by all Python source
+    code and/or Jupyter notebooks that reside in given file / directory
+    path(s). If a module appears to be optional, its location information is
+    printed next to it (filepath, line number, column number). Modules that are
+    already installed can be excluded from the output with the ``-x`` flag.
+
+Future improvements might include:
+  - Filtering out builtin modules
+  - Detecting whether a module is truly optional or required (instead of printing its metadata)
 """
 
 import argparse
