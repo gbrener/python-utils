@@ -18,12 +18,18 @@ import sys
 
 
 class ImportLister(ast.NodeVisitor):
+    """Visit each node of AST, storing the module name of each import
+    statement. Some additional metadata also gets collected, including
+    the filepath, line number, and column offset.
+    """
     def __init__(self):
         self.filename = None
         self._imports = defaultdict(list)
 
     @property
     def imports(self):
+        """Dictionary mapping (imported) module names to their metadata.
+        """
         return copy.deepcopy(self._imports)
 
     def visit_Import(self, node):
@@ -52,6 +58,10 @@ class ImportLister(ast.NodeVisitor):
 
 
 def get_filepaths(files_or_directories):
+    """Return a list of file paths which represent all Python scripts and
+    Jupyter notebooks that reside in given list of files/directories,
+    ``files_or_directories``.
+    """
     filepaths = []
     for thing in files_or_directories:
         isfile = os.path.isfile(thing)
@@ -73,6 +83,13 @@ def get_filepaths(files_or_directories):
 
 
 def collect_non_builtins(imports, exclude_installable):
+    """Return a subset of the given ``imports`` dict, optionally excluding
+    the modules that are already installed in the environment, and containing
+    a smaller amount of metadata (suitable for printing on STDOUT).
+
+    TODO: At some point, this function should also have a way to exclude
+    builtin modules.
+    """
     non_builtin_mods = {}
     installable_modules = set(list(sys.builtin_module_names) +
                               [mod[1] for mod in pkgutil.iter_modules()])
@@ -92,6 +109,9 @@ def collect_non_builtins(imports, exclude_installable):
 
 
 def display_imports(mods_to_display):
+    """Print each found modules on STDOUT. If the module appears to be optional,
+    print its metadata alongside the module name.
+    """
     print('Imports found ({}):'.format(len(mods_to_display)))
     width = max(map(len, mods_to_display))
     for mod in sorted(mods_to_display):
@@ -101,6 +121,8 @@ def display_imports(mods_to_display):
 
 
 def main(argv):
+    """Main function.
+    """
     parser = argparse.ArgumentParser(description='List Python imports in any number of files / directories passed as arguments (Jupyter notebooks experimentally supported). If the imports appear to be optional - nested in control flow structures like if-statements, try-catch, etc - their locations are displayed as well.')
     parser.add_argument('file_or_directory', nargs='+', help=(
         'One or more files/directories containing Python code to parse'
