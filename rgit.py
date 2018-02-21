@@ -2,8 +2,6 @@
 
 """
 Interface with GitHub via the command-line.
-
-Works with Python 2 and Python 3.
 """
 
 from __future__ import (absolute_import, division, print_function,
